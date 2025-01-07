@@ -20,7 +20,7 @@ spring:
       port: 6379
 
   jpa:
-    database-platform: org.hibernate.dialect.MariaDBDialect
+    database-platform: org.hibernate.dialect.MariaDB106Dialect
     hibernate:
       ddl-auto: create
     properties:
