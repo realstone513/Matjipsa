@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class OrderItemRequest {
+public class OrderItemDTO {
     private String itemName;
     private int count;
 }

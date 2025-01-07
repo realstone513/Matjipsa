@@ -30,7 +30,7 @@ public class OrderService {
 
         // OrderItems 생성
         List<OrderItem> orderItems = orderRequest.getOrderItems().stream()
-                .map(this::convertToOrderItem)  // OrderItem 생성
+                .map(this::convertToOrderItem)
                 .collect(Collectors.toList());
 
         // OrderItem들과 연결
@@ -54,13 +54,13 @@ public class OrderService {
         return response;
     }
 
-    private OrderItem convertToOrderItem(OrderItemRequest orderItemRequest) {
-        Optional<Item> optionalItem = itemRepository.findByItemName(orderItemRequest.getItemName());
-        Item item = optionalItem.orElseThrow(() -> new RuntimeException("Item with name " + orderItemRequest.getItemName() + " not found"));
+    private OrderItem convertToOrderItem(OrderItemDTO orderItemDTO) {
+        Optional<Item> optionalItem = itemRepository.findByItemName(orderItemDTO.getItemName());
+        Item item = optionalItem.orElseThrow(() -> new RuntimeException("Item with name " + orderItemDTO.getItemName() + " not found"));
 
         OrderItem orderItem = new OrderItem();
         orderItem.setItem(item);
-        orderItem.setCount(orderItemRequest.getCount());
+        orderItem.setCount(orderItemDTO.getCount());
 
         return orderItem;
     }
