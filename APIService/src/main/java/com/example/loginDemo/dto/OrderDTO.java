@@ -10,6 +10,7 @@ import java.util.List;
 @Setter
 public class OrderDTO {
 
+    private Long userId;
     private LocalDate orderDate;
     private List<OrderItemDTO> orderItems;
 }
