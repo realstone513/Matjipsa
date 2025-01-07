@@ -22,22 +22,17 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<?> createOrder(@RequestHeader("Authorization") String accessToken,@RequestBody OrderRequest orderRequest) {
+    public ResponseEntity<?> createOrder(@RequestBody OrderDTO orderDTO) {
         try {
             // 주문 생성
-            var order = orderService.createOrder(orderRequest);
+            orderService.saveOrder(orderDTO);
 
             // 생성된 주문을 응답으로 반환
-            return new ResponseEntity<>(order, HttpStatus.CREATED);
+            return new ResponseEntity<>(HttpStatus.CREATED);
         } catch (Exception e) {
             // 예외 발생 시 오류 메시지 반환
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
-    // 모든 주문 조회 API
-    @GetMapping
-    public List<Order> getAllOrders(@RequestHeader("Authorization") String accessToken) {
-        return orderService.getAllOrders();
-    }
 }
