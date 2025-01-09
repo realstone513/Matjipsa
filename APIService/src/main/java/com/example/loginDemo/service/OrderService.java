@@ -1,5 +1,6 @@
 package com.example.loginDemo.service;
 
+import com.example.loginDemo.auth.JwtService;
 import com.example.loginDemo.domain.Item;
 import com.example.loginDemo.domain.Order;
 import com.example.loginDemo.domain.OrderItem;
@@ -10,10 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,48 +21,53 @@ public class OrderService {
     private final UserRepository userRepository;
     private final OrderItemRepository orderItemRepository;
     private final ItemRepository itemRepository;
+    private final UserService userService;
+    private final JwtService jwtService;
 
+    // 주문 생성
     @Transactional
-    public void saveOrder(OrderDTO orderDTO) {
-        // 사용자 ID로 User 객체를 조회
-        User user = userRepository.findById(orderDTO.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + orderDTO.getUserId()));
+    public void createOrder(OrderRequest orderRequest, String accessToken) {
+        User user = getCurrentUser(accessToken); // 중복된 유저 정보 추출 부분을 호출
 
         // 주문 생성
         Order order = new Order();
-        order.setOrderDate(orderDTO.getOrderDate());
-        order.setUser(user); // User 객체 설정
+        order.setOrderDate(orderRequest.getOrderDate());
+        order.setUser(user);
 
-        orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
 
-        orderDTO.getOrderItems().forEach(orderItemDTO -> {
-            Item item = itemRepository.findByItemName(orderItemDTO.getItemName())
-                    .orElseThrow(() -> new IllegalArgumentException("Item not found: " + orderItemDTO.getItemName()));
-
+        // 주문 아이템 처리
+        for (OrderItemRequest orderItemRequest : orderRequest.getOrderItems()) {
             OrderItem orderItem = new OrderItem();
-            orderItem.setItem(item);
-            orderItem.setCount(orderItemDTO.getCount());
-            orderItem.setOrder(order);
-            orderItemRepository.save(orderItem);
-        });
+            orderItem.setOrder(savedOrder);
+            orderItem.setCount(orderItemRequest.getCount());
+
+            itemRepository.findByItemName(orderItemRequest.getItemName())
+                    .ifPresent(item -> {
+                        orderItem.setItem(item);
+                        orderItemRepository.save(orderItem);
+                    });
+        }
     }
 
-    public List<OrderDTO> getOrdersByUserId(Long userId) {
-        return orderRepository.findByUserId(userId).stream().map(order -> {
-            // 주문 항목 리스트 생성
-            List<OrderItemDTO> orderItemDTOs = orderItemRepository.findByOrder(order).stream().map(orderItem -> {
-                OrderItemDTO orderItemDTO = new OrderItemDTO();
-                orderItemDTO.setItemName(orderItem.getItem().getItemName());
-                orderItemDTO.setCount(orderItem.getCount());
-                return orderItemDTO;
-            }).collect(Collectors.toList());
+    // 유저별 식재료 조회
+    public List<Item> findItemsByUser(String accessToken) {
+        User user = getCurrentUser(accessToken); // 중복된 유저 정보 추출 부분을 호출
 
-            // OrderDTO 생성
-            OrderDTO orderDTO = new OrderDTO();
-            orderDTO.setOrderDate(order.getOrderDate());
-            orderDTO.setOrderItems(orderItemDTOs);
-            orderDTO.setUserId(order.getUser().getId());  // 사용자 ID 설정
-            return orderDTO;
-        }).collect(Collectors.toList());
+        // 유저가 주문한 주문 아이템을 조회
+        List<OrderItem> orderItems = orderItemRepository.findByOrder_User(user);
+
+        // 주문 아이템에 포함된 식재료 목록 반환
+        return orderItems.stream()
+                .map(OrderItem::getItem) // OrderItem에서 Item을 추출
+                .distinct() // 중복된 식재료를 제거
+                .collect(Collectors.toList());
+    }
+
+    // 현재 로그인한 유저 정보 추출
+    private User getCurrentUser(String accessToken) {
+        String email = jwtService.extractUsername(accessToken);
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
     }
 }
