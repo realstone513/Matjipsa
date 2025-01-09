@@ -19,9 +19,6 @@ import java.util.List;
 public class OrderController {
 
     private final OrderService orderService;
-    private final OrderRepository orderRepository;
-    private final OrderItemRepository orderItemRepository;
-    private final UserService userService;
 
     // 주문 생성
     @PostMapping
