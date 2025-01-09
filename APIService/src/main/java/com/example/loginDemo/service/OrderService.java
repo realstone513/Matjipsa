@@ -21,7 +21,6 @@ public class OrderService {
     private final UserRepository userRepository;
     private final OrderItemRepository orderItemRepository;
     private final ItemRepository itemRepository;
-    private final UserService userService;
     private final JwtService jwtService;
 
     // 주문 생성
@@ -63,6 +62,21 @@ public class OrderService {
                 .distinct() // 중복된 식재료를 제거
                 .collect(Collectors.toList());
     }
+
+    // 유저가 주문한 주문 아이템 삭제
+    @Transactional
+    public void deleteOrderItemByUser(Long orderItemId, String accessToken) {
+        User user = getCurrentUser(accessToken); // 중복된 유저 정보 추출 부분을 호출
+
+        // 해당 유저의 주문에서 삭제하려는 주문 아이템 찾기
+        OrderItem orderItem = orderItemRepository.findById(orderItemId)
+                .filter(item -> item.getOrder().getUser().equals(user)) // 해당 주문이 유저의 주문인지 확인
+                .orElseThrow(() -> new IllegalArgumentException("OrderItem not found or not owned by the user"));
+
+        // 주문 아이템 삭제
+        orderItemRepository.delete(orderItem);
+    }
+
 
     // 현재 로그인한 유저 정보 추출
     private User getCurrentUser(String accessToken) {

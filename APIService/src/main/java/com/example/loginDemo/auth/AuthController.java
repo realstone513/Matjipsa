@@ -75,7 +75,7 @@ public class AuthController {
     }
 
     private String extractToken(String token) {
-        return token.substring(7); // Assuming "Bearer " prefix
+        return token.substring(7);
     }
 
 }

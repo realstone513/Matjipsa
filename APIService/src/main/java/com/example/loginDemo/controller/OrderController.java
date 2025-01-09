@@ -26,19 +26,38 @@ public class OrderController {
     // 주문 생성
     @PostMapping
     public ResponseEntity<?> createOrder(@RequestBody OrderRequest orderRequest, @RequestHeader("Authorization") String accessToken) {
-        // Authorization 헤더에서 "Bearer " 제거하고 토큰만 추출
-        String token = accessToken.replace("Bearer ", "");
+        String token = extractToken(accessToken);
 
         orderService.createOrder(orderRequest, token);
 
-        // 성공적인 응답 반환
-        return ResponseEntity.ok(HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     // 유저별 식재료 조회
-    @GetMapping("/user_item")
-    public List<Item> getUserItems(@RequestHeader("Authorization") String accessToken) {
-        String token = accessToken.replace("Bearer ", "");
-        return orderService.findItemsByUser(token);
+    @GetMapping("/user/items")
+    public ResponseEntity<List<Item>> getUserItems(@RequestHeader("Authorization") String accessToken) {
+        String token = extractToken(accessToken);
+        List<Item> items = orderService.findItemsByUser(token);
+
+        return ResponseEntity.ok(items);
+    }
+
+    // 유저가 주문 아이템 삭제
+    @DeleteMapping("/items/{orderItemId}")
+    public ResponseEntity<String> deleteOrderItemByUser(
+            @PathVariable Long orderItemId,
+            @RequestHeader("Authorization") String accessToken) {
+        try {
+            String token = extractToken(accessToken);
+            orderService.deleteOrderItemByUser(orderItemId, token);
+            return ResponseEntity.ok("Order item deleted successfully");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // 추출 메서드
+    private String extractToken(String accessToken) {
+        return accessToken.replace("Bearer ", "");
     }
 }
