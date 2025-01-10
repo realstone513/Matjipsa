@@ -1,15 +1,14 @@
 package com.example.loginDemo.controller;
 
-import com.example.loginDemo.domain.Order;
-import com.example.loginDemo.domain.OrderItem;
-import com.example.loginDemo.domain.User;
+import com.example.loginDemo.domain.Item;
+import com.example.loginDemo.repository.OrderItemRepository;
+import com.example.loginDemo.repository.OrderRepository;
 import com.example.loginDemo.service.OrderService;
 import com.example.loginDemo.dto.*;
+import com.example.loginDemo.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +20,7 @@ public class OrderController {
 
     private final OrderService orderService;
 
+<<<<<<< HEAD
     //영수증으로 주문 추가
     @PostMapping
     public ResponseEntity<?> createOrder(@RequestBody OrderRequest orderRequest, @RequestHeader("Authorization") String accessToken) {
@@ -34,6 +34,15 @@ public class OrderController {
     public ResponseEntity<String> createOrder3(@RequestBody OrderRequest2 orderRequest, @RequestHeader("Authorization") String accessToken) {
         String token = extractToken(accessToken);
         orderService.createOrder2(orderRequest, token);
+=======
+    // 주문 생성
+    @PostMapping
+    public ResponseEntity<?> createOrder(@RequestBody OrderRequest orderRequest, @RequestHeader("Authorization") String accessToken) {
+        String token = extractToken(accessToken);
+
+        orderService.createOrder(orderRequest, token);
+
+>>>>>>> 569273604ceedf422aeb12459b5c8d6b539fa3e8
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
