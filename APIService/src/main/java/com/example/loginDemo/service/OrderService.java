@@ -57,63 +57,44 @@ public class OrderService {
     //직접 주문 추가
     @Transactional
     public void createOrder2(OrderRequest2 orderRequest, String accessToken) {
-        // 현재 사용자 정보 추출
-        System.out.println("Extracting current user from access token...");
         User user = getCurrentUser(accessToken);
-        System.out.println("User found: " + user.getUsername());
 
         // 주문 생성
-        System.out.println("Creating order for user: " + user.getUsername());
         Order order = new Order();
         order.setOrderDate(orderRequest.getOrderDate());
         order.setUser(user);
 
-        // 주문 저장
-        System.out.println("Saving order to the database...");
         Order savedOrder = orderRepository.save(order);
-        System.out.println("Order saved with ID: " + savedOrder.getId());
 
         // 주문 아이템 처리
         for (OrderItemRequest2 orderItemRequest : orderRequest.getOrderItems()) {
-            System.out.println("Processing order item: " + orderItemRequest.getItemName());
-
-            // 새 주문 항목 생성
             OrderItem orderItem = new OrderItem();
-            orderItem.setOrder(savedOrder);  // 주문과 연결
-            orderItem.setCount(orderItemRequest.getCount());  // 수량 설정
-            System.out.println("Set order item count: " + orderItemRequest.getCount());
+            orderItem.setOrder(savedOrder);
+            orderItem.setCount(orderItemRequest.getCount());
 
-            // 상품이 미리 정의되어 있는지 확인
+            // 먼저 기존 아이템을 확인
             Optional<Item> existingItem = itemRepository.findByItemName(orderItemRequest.getItemName());
+
             if (existingItem.isPresent()) {
-                System.out.println("Item found in the database: " + existingItem.get().getItemName());
-                // 미리 정의된 상품이 있으면 그 상품을 사용
+                // 기존 아이템이 존재하면 해당 아이템을 사용
                 orderItem.setItem(existingItem.get());
             } else {
-                System.out.println("Item not found. Creating new UserCustomItem...");
-                // 미리 정의된 상품이 없으면 UserCustomItem을 생성
-                UserCustomItem userCustomItem = new UserCustomItem();
-                userCustomItem.setItemName(orderItemRequest.getItemName());  // DTO에서 받은 itemName 설정
-                userCustomItem.setCategory(orderItemRequest.getCategory());  // DTO에서 받은 category 설정
-                userCustomItem.setStorageMethod(orderItemRequest.getStorageMethod());  // DTO에서 받은 storageMethod 설정
-                userCustomItem.setSellByDays(orderItemRequest.getSellByDays());  // DTO에서 받은 sellByDays 설정
-                userCustomItem.setUseByDays(orderItemRequest.getUseByDays());  // DTO에서 받은 useByDays 설정
-                userCustomItem.setUser(user);  // 현재 사용자 설정
+                // 기존 아이템이 없다면, UserCustomItem으로 저장
+                UserCustomItem customItem = new UserCustomItem();
+                customItem.setItemName(orderItemRequest.getItemName());
+                customItem.setCount(orderItemRequest.getCount());
+                customItem.setCategory(orderItemRequest.getCategory());
+                customItem.setStorageMethod(orderItemRequest.getStorageMethod());
+                customItem.setSellByDays(orderItemRequest.getSellByDays());
+                customItem.setUseByDays(orderItemRequest.getUseByDays());
+                customItem.setUser(user);
 
-                // 새 UserCustomItem 저장
-                userCustomItemRepository.save(userCustomItem);
-                System.out.println("UserCustomItem created and saved: " + userCustomItem.getItemName());
-
-                // 새 UserCustomItem을 OrderItem에 설정
-                orderItem.setUserCustomItem(userCustomItem);
+                UserCustomItem savedCustomItem = userCustomItemRepository.save(customItem);
+                orderItem.setUserCustomItem(savedCustomItem);
             }
 
-            // 주문 항목 저장
             orderItemRepository.save(orderItem);
-            System.out.println("Order item saved with ID: " + orderItem.getId());
         }
-
-        System.out.println("Order creation process completed.");
     }
 
     // 유저별 식재료 조회
@@ -125,7 +106,18 @@ public class OrderService {
 
         // 주문 아이템에 포함된 식재료 목록 반환
         return orderItems.stream()
-                .map(orderItem -> new OrderItemResponse(orderItem.getId(), orderItem.getItem()))
+                .map(orderItem -> {
+                    // 기존 아이템이 있을 경우, 해당 아이템을 사용
+                    if (orderItem.getItem() != null) {
+                        return new OrderItemResponse(orderItem.getId(), orderItem.getItem(), null); // Item만 포함
+                    }
+                    // 사용자 정의 아이템이 있을 경우, 해당 사용자 정의 아이템을 사용
+                    else if (orderItem.getUserCustomItem() != null) {
+                        return new OrderItemResponse(orderItem.getId(), null, orderItem.getUserCustomItem()); // UserCustomItem만 포함
+                    }
+                    return null; // 이 부분은 안전성 확보를 위해 추가 (null 반환 방지)
+                })
+                .filter(item -> item != null) // null 값 필터링
                 .distinct() // 중복된 식재료를 제거
                 .collect(Collectors.toList());
     }

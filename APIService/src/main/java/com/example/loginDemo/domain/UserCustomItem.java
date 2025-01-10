@@ -12,6 +12,7 @@ public class UserCustomItem {
     private Long id;
 
     private String itemName;
+    private int count;
     private String category;
     private String storageMethod;
     private int sellByDays;
@@ -20,6 +21,4 @@ public class UserCustomItem {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
-
-    // Getters and Setters
 }
