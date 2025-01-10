@@ -50,15 +50,15 @@ public class OrderService {
     }
 
     // 유저별 식재료 조회
-    public List<Item> findItemsByUser(String accessToken) {
-        User user = getCurrentUser(accessToken); // 중복된 유저 정보 추출 부분을 호출
+    public List<OrderItemResponse> findItemsByUser(String accessToken) {
+        User user = getCurrentUser(accessToken);
 
         // 유저가 주문한 주문 아이템을 조회
         List<OrderItem> orderItems = orderItemRepository.findByOrder_User(user);
 
         // 주문 아이템에 포함된 식재료 목록 반환
         return orderItems.stream()
-                .map(OrderItem::getItem) // OrderItem에서 Item을 추출
+                .map(orderItem -> new OrderItemResponse(orderItem.getId(), orderItem.getItem()))
                 .distinct() // 중복된 식재료를 제거
                 .collect(Collectors.toList());
     }

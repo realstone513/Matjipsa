@@ -32,11 +32,9 @@ public class OrderController {
 
     // 유저별 식재료 조회
     @GetMapping("/user/items")
-    public ResponseEntity<List<Item>> getUserItems(@RequestHeader("Authorization") String accessToken) {
+    public ResponseEntity<List<OrderItemResponse>> getUserItems(@RequestHeader("Authorization") String accessToken) {
         String token = extractToken(accessToken);
-        List<Item> items = orderService.findItemsByUser(token);
-
-        return ResponseEntity.ok(items);
+        return ResponseEntity.ok(orderService.findItemsByUser(token));
     }
 
     // 유저가 주문 아이템 삭제
