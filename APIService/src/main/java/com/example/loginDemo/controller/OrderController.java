@@ -1,11 +1,7 @@
 package com.example.loginDemo.controller;
 
-import com.example.loginDemo.domain.Item;
-import com.example.loginDemo.repository.OrderItemRepository;
-import com.example.loginDemo.repository.OrderRepository;
 import com.example.loginDemo.service.OrderService;
 import com.example.loginDemo.dto.*;
-import com.example.loginDemo.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,8 +16,7 @@ public class OrderController {
 
     private final OrderService orderService;
 
-<<<<<<< HEAD
-    //영수증으로 주문 추가
+    // 영수증으로 주문 추가
     @PostMapping
     public ResponseEntity<?> createOrder(@RequestBody OrderRequest orderRequest, @RequestHeader("Authorization") String accessToken) {
         String token = extractToken(accessToken);
@@ -29,20 +24,11 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    //직접 주문 추가
+    // 직접 주문 추가
     @PostMapping("/create")
     public ResponseEntity<String> createOrder3(@RequestBody OrderRequest2 orderRequest, @RequestHeader("Authorization") String accessToken) {
         String token = extractToken(accessToken);
         orderService.createOrder2(orderRequest, token);
-=======
-    // 주문 생성
-    @PostMapping
-    public ResponseEntity<?> createOrder(@RequestBody OrderRequest orderRequest, @RequestHeader("Authorization") String accessToken) {
-        String token = extractToken(accessToken);
-
-        orderService.createOrder(orderRequest, token);
-
->>>>>>> 569273604ceedf422aeb12459b5c8d6b539fa3e8
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -67,7 +53,7 @@ public class OrderController {
         }
     }
 
-    // 추출 메서드
+    // 토큰 추출 메서드
     private String extractToken(String accessToken) {
         return accessToken.replace("Bearer ", "");
     }
