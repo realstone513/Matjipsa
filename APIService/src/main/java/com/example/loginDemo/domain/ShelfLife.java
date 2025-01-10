@@ -24,7 +24,7 @@ public class ShelfLife {
     private int sellByDays;  // 유통기한 일수
 
     @Column(name = "use_by_days", nullable = false)
-    private int  useByDays;   // 소비기한 일수
+    private int useByDays;   // 소비기한 일수
 
     public ShelfLife(int sellByDays, int useByDays) {
         this.sellByDays = sellByDays;

@@ -18,10 +18,6 @@ public class OrderItem {
     @Column(name = "order_item_id", updatable = false)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "item_id", nullable = true)
-    private Item item;
-
     @Column(nullable = true)
     private int count;
 
@@ -29,4 +25,12 @@ public class OrderItem {
     @JoinColumn(name = "order_id", nullable = false)
     @JsonBackReference
     private Order order;
+
+    @ManyToOne
+    @JoinColumn(name = "item_id", nullable = true)
+    private Item item;
+
+    @ManyToOne
+    @JoinColumn(name = "user_custom_item_id", nullable = true)
+    private UserCustomItem userCustomItem;
 }

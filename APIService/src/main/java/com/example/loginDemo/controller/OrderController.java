@@ -21,13 +21,19 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    // 주문 생성
+    //영수증으로 주문 추가
     @PostMapping
     public ResponseEntity<?> createOrder(@RequestBody OrderRequest orderRequest, @RequestHeader("Authorization") String accessToken) {
         String token = extractToken(accessToken);
+        orderService.createOrder(orderRequest, token);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
 
+    //직접 주문 추가
+    @PostMapping("/create")
+    public ResponseEntity<String> createOrder3(@RequestBody OrderRequest2 orderRequest, @RequestHeader("Authorization") String accessToken) {
+        String token = extractToken(accessToken);
         orderService.createOrder2(orderRequest, token);
-
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 

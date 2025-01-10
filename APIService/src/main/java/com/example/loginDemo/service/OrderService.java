@@ -1,10 +1,7 @@
 package com.example.loginDemo.service;
 
 import com.example.loginDemo.auth.JwtService;
-import com.example.loginDemo.domain.Item;
-import com.example.loginDemo.domain.Order;
-import com.example.loginDemo.domain.OrderItem;
-import com.example.loginDemo.domain.User;
+import com.example.loginDemo.domain.*;
 import com.example.loginDemo.dto.*;
 import com.example.loginDemo.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -22,12 +19,13 @@ public class OrderService {
     private final UserRepository userRepository;
     private final OrderItemRepository orderItemRepository;
     private final ItemRepository itemRepository;
+    private final UserCustomItemRepository userCustomItemRepository;
     private final JwtService jwtService;
 
-    // 주문 생성
+    //영수증으로 주문 추가
     @Transactional
     public void createOrder(OrderRequest orderRequest, String accessToken) {
-        User user = getCurrentUser(accessToken); // 중복된 유저 정보 추출 부분을 호출
+        User user = getCurrentUser(accessToken);
 
         // 주문 생성
         Order order = new Order();
@@ -42,45 +40,80 @@ public class OrderService {
             orderItem.setOrder(savedOrder);
             orderItem.setCount(orderItemRequest.getCount());
 
-            itemRepository.findByItemName(orderItemRequest.getItemName())
-                    .ifPresent(item -> {
-                        orderItem.setItem(item);
-                        orderItemRepository.save(orderItem);
-                    });
-        }
-    }
-
-    //주문 2
-    @Transactional
-    public void createOrder2(OrderRequest orderRequest, String accessToken) {
-        User user = getCurrentUser(accessToken); // 중복된 유저 정보 추출 부분을 호출
-
-        // 주문 생성
-        Order order = new Order();
-        order.setOrderDate(orderRequest.getOrderDate());
-        order.setUser(user);
-
-        Order savedOrder = orderRepository.save(order);
-
-        // 주문 아이템 처리
-        for (OrderItemRequest orderItemRequest : orderRequest.getOrderItems()) {
-            OrderItem orderItem = new OrderItem();
-            orderItem.setOrder(savedOrder);
-            orderItem.setCount(orderItemRequest.getCount());
-
-            // Item이 미리 정의되어 있는지 확인
+            // 사전에 정의된 Item이 있는지 확인
             Optional<Item> existingItem = itemRepository.findByItemName(orderItemRequest.getItemName());
 
             if (existingItem.isPresent()) {
+                // 정의된 Item이 있으면 해당 Item을 주문 항목에 설정
+                orderItem.setItem(existingItem.get());
+                orderItemRepository.save(orderItem);
+            } else {
+                // 정의되지 않은 Item은 주문 항목에서 제외
+                System.out.println("Item not found: " + orderItemRequest.getItemName() + " (Skipping this item)");
+            }
+        }
+    }
+
+    //직접 주문 추가
+    @Transactional
+    public void createOrder2(OrderRequest2 orderRequest, String accessToken) {
+        // 현재 사용자 정보 추출
+        System.out.println("Extracting current user from access token...");
+        User user = getCurrentUser(accessToken);
+        System.out.println("User found: " + user.getUsername());
+
+        // 주문 생성
+        System.out.println("Creating order for user: " + user.getUsername());
+        Order order = new Order();
+        order.setOrderDate(orderRequest.getOrderDate());
+        order.setUser(user);
+
+        // 주문 저장
+        System.out.println("Saving order to the database...");
+        Order savedOrder = orderRepository.save(order);
+        System.out.println("Order saved with ID: " + savedOrder.getId());
+
+        // 주문 아이템 처리
+        for (OrderItemRequest2 orderItemRequest : orderRequest.getOrderItems()) {
+            System.out.println("Processing order item: " + orderItemRequest.getItemName());
+
+            // 새 주문 항목 생성
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrder(savedOrder);  // 주문과 연결
+            orderItem.setCount(orderItemRequest.getCount());  // 수량 설정
+            System.out.println("Set order item count: " + orderItemRequest.getCount());
+
+            // 상품이 미리 정의되어 있는지 확인
+            Optional<Item> existingItem = itemRepository.findByItemName(orderItemRequest.getItemName());
+            if (existingItem.isPresent()) {
+                System.out.println("Item found in the database: " + existingItem.get().getItemName());
                 // 미리 정의된 상품이 있으면 그 상품을 사용
                 orderItem.setItem(existingItem.get());
             } else {
-                // 미리 정의된 상품이 없으면 Item을 null로 설정
-                orderItem.setItem(null); // 새로 Item을 추가하지 않음
+                System.out.println("Item not found. Creating new UserCustomItem...");
+                // 미리 정의된 상품이 없으면 UserCustomItem을 생성
+                UserCustomItem userCustomItem = new UserCustomItem();
+                userCustomItem.setItemName(orderItemRequest.getItemName());  // DTO에서 받은 itemName 설정
+                userCustomItem.setCategory(orderItemRequest.getCategory());  // DTO에서 받은 category 설정
+                userCustomItem.setStorageMethod(orderItemRequest.getStorageMethod());  // DTO에서 받은 storageMethod 설정
+                userCustomItem.setSellByDays(orderItemRequest.getSellByDays());  // DTO에서 받은 sellByDays 설정
+                userCustomItem.setUseByDays(orderItemRequest.getUseByDays());  // DTO에서 받은 useByDays 설정
+                userCustomItem.setUser(user);  // 현재 사용자 설정
+
+                // 새 UserCustomItem 저장
+                userCustomItemRepository.save(userCustomItem);
+                System.out.println("UserCustomItem created and saved: " + userCustomItem.getItemName());
+
+                // 새 UserCustomItem을 OrderItem에 설정
+                orderItem.setUserCustomItem(userCustomItem);
             }
 
-            orderItemRepository.save(orderItem); // OrderItem 저장
+            // 주문 항목 저장
+            orderItemRepository.save(orderItem);
+            System.out.println("Order item saved with ID: " + orderItem.getId());
         }
+
+        System.out.println("Order creation process completed.");
     }
 
     // 유저별 식재료 조회
