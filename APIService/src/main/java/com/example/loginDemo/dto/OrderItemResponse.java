@@ -1,23 +1,23 @@
 package com.example.loginDemo.dto;
 
 import com.example.loginDemo.domain.Item;
-<<<<<<< HEAD
 import com.example.loginDemo.domain.UserCustomItem;
-import com.example.loginDemo.repository.UserCustomItemRepository;
-=======
->>>>>>> 569273604ceedf422aeb12459b5c8d6b539fa3e8
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @AllArgsConstructor
 @Getter @Setter
 public class OrderItemResponse {
     private Long orderItemId;
-    private Item item;
-<<<<<<< HEAD
-    private UserCustomItem userCustomItem;
-=======
+    private LocalDate orderDate;
+    private String itemName;
+    private String categoryName;
+    private String storageMethodName;
+    private Integer sellByDays;
+    private Integer useByDays;
 
->>>>>>> 569273604ceedf422aeb12459b5c8d6b539fa3e8
 }

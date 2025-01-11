@@ -13,8 +13,8 @@ public class UserCustomItem {
 
     private String itemName;
     private int count;
-    private String category;
-    private String storageMethod;
+    private String categoryName;
+    private String storageMethodName;
     private int sellByDays;
     private int useByDays;
 

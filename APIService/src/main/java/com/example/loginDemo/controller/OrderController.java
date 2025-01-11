@@ -10,14 +10,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/orders")
+@RequestMapping("/api/ingredients")
 @RequiredArgsConstructor
 public class OrderController {
 
     private final OrderService orderService;
 
     // 영수증으로 주문 추가
-    @PostMapping
+    @PostMapping("/receipts")
     public ResponseEntity<?> createOrder(@RequestBody OrderRequest orderRequest, @RequestHeader("Authorization") String accessToken) {
         String token = extractToken(accessToken);
         orderService.createOrder(orderRequest, token);
@@ -25,7 +25,7 @@ public class OrderController {
     }
 
     // 직접 주문 추가
-    @PostMapping("/create")
+    @PostMapping("/manual")
     public ResponseEntity<String> createOrder3(@RequestBody OrderRequest2 orderRequest, @RequestHeader("Authorization") String accessToken) {
         String token = extractToken(accessToken);
         orderService.createOrder2(orderRequest, token);
@@ -33,20 +33,20 @@ public class OrderController {
     }
 
     // 유저별 식재료 조회
-    @GetMapping("/user/items")
+    @GetMapping
     public ResponseEntity<List<OrderItemResponse>> getUserItems(@RequestHeader("Authorization") String accessToken) {
         String token = extractToken(accessToken);
         return ResponseEntity.ok(orderService.findItemsByUser(token));
     }
 
     // 유저가 주문 아이템 삭제
-    @DeleteMapping("/items/{orderItemId}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteOrderItemByUser(
-            @PathVariable Long orderItemId,
+            @PathVariable Long id,
             @RequestHeader("Authorization") String accessToken) {
         try {
             String token = extractToken(accessToken);
-            orderService.deleteOrderItemByUser(orderItemId, token);
+            orderService.deleteOrderItemByUser(id, token);
             return ResponseEntity.ok("Order item deleted successfully");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

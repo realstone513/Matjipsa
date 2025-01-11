@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -83,8 +85,8 @@ public class OrderService {
                 UserCustomItem customItem = new UserCustomItem();
                 customItem.setItemName(orderItemRequest.getItemName());
                 customItem.setCount(orderItemRequest.getCount());
-                customItem.setCategory(orderItemRequest.getCategory());
-                customItem.setStorageMethod(orderItemRequest.getStorageMethod());
+                customItem.setCategoryName(orderItemRequest.getCategory());
+                customItem.setStorageMethodName(orderItemRequest.getStorageMethod());
                 customItem.setSellByDays(orderItemRequest.getSellByDays());
                 customItem.setUseByDays(orderItemRequest.getUseByDays());
                 customItem.setUser(user);
@@ -107,20 +109,38 @@ public class OrderService {
         // 주문 아이템에 포함된 식재료 목록 반환
         return orderItems.stream()
                 .map(orderItem -> {
-                    // 기존 아이템이 있을 경우, 해당 아이템을 사용
+                    LocalDate orderDate = orderItem.getOrder().getOrderDate(); // 주문 날짜 가져오기
                     if (orderItem.getItem() != null) {
-                        return new OrderItemResponse(orderItem.getId(), orderItem.getItem(), null); // Item만 포함
+                        // 기존 Item 정보를 OrderItemResponse로 매핑
+                        Item item = orderItem.getItem();
+                        return new OrderItemResponse(
+                                orderItem.getId(),
+                                orderDate, // 주문 날짜 설정
+                                item.getItemName(),
+                                item.getCategory().getCategoryName(),
+                                item.getStorageMethod().getStorageMethodName(),
+                                item.getShelfLife().getSellByDays(),
+                                item.getShelfLife().getUseByDays()
+                        );
+                    } else if (orderItem.getUserCustomItem() != null) {
+                        // UserCustomItem 정보를 OrderItemResponse로 매핑
+                        UserCustomItem customItem = orderItem.getUserCustomItem();
+                        return new OrderItemResponse(
+                                orderItem.getId(),
+                                orderDate, // 주문 날짜 설정
+                                customItem.getItemName(),
+                                customItem.getCategoryName(),
+                                customItem.getStorageMethodName(),
+                                customItem.getSellByDays(),
+                                customItem.getUseByDays()
+                        );
                     }
-                    // 사용자 정의 아이템이 있을 경우, 해당 사용자 정의 아이템을 사용
-                    else if (orderItem.getUserCustomItem() != null) {
-                        return new OrderItemResponse(orderItem.getId(), null, orderItem.getUserCustomItem()); // UserCustomItem만 포함
-                    }
-                    return null; // 이 부분은 안전성 확보를 위해 추가 (null 반환 방지)
+                    return null; // 안전을 위해 추가 (null 반환 방지)
                 })
                 .filter(item -> item != null) // null 값 필터링
-                .distinct() // 중복된 식재료를 제거
                 .collect(Collectors.toList());
     }
+
 
     // 유저가 주문한 주문 아이템 삭제
     @Transactional
